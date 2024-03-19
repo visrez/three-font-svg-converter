@@ -10,16 +10,14 @@ const fs = require('fs');
 /* eslint-disable max-len */
 /* eslint-disable semi-spacing */
 
-const utf8Encode = new TextEncoder();
-
-const hexEncode = (string) => Array.from(utf8Encode.encode(string)).map((b) => b.toString(16)).join('');
 const svg = (data, pathData) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${data.boundingBox.xMin} ${data.boundingBox.yMin} ${data.boundingBox.xMax - data.boundingBox.xMin} ${data.boundingBox.yMax - data.boundingBox.yMin}"><path d="${pathData}" fill="white"/></svg>`;
 
 function threeToSVG(data) {
   Object.entries(data.glyphs).forEach(([glyph, info]) => {
-    const encodedGlyph = hexEncode(glyph);
+    const glyphCodePointHex = glyph.codePointAt(0).toString(16);
+    const encodedGlyph = `\\u${'0000'.substring(0, 4 - glyphCodePointHex.length)}${glyphCodePointHex}`;
 
-    console.log(`Glyph codepoint (?): ${encodedGlyph}`);
+    console.log(`Glyph codepoint: ${encodedGlyph}`);
     if (info?.name) console.log(`Name: ${info.name}`);
     console.log(`X offset: ${info.ha}`);
 
