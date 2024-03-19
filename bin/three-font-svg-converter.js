@@ -4,6 +4,9 @@
 // `$ cat media/fonts/icons_regular.json | node scripts/threeFontSVGConverter.js`
 
 const fs = require('fs');
+const JSDOM = require('jsdom');
+
+const DOM = new JSDOM.JSDOM();
 
 /* eslint-disable no-console */
 /* eslint-disable no-plusplus */
@@ -67,15 +70,15 @@ function threeToSVG(data) {
           const controlPointY2 = input[i++];
 
           // path.bezierCurveTo(controlPointX1, controlPointY1, controlPointX2, controlPointY2, x, y);
-          path += `C ${controlPointX1} ${controlPointY1},  ${controlPointX2} ${controlPointY2}, ${x} ${y} `;
+          path += `C ${controlPointX1} ${controlPointY1}, ${controlPointX2} ${controlPointY2}, ${x} ${y} `;
           break;
         }
         case 'z': {
-          path += 'z';
+          path += 'Z';
           break;
         }
         default: {
-          console.error(`Unknown action: ${action} ${hexEncode(action)} ${action === ""}`);
+          console.error(`Unknown action: ${action}`);
           process.exit(1);
         }
       }
@@ -85,12 +88,89 @@ function threeToSVG(data) {
   });
 }
 
-const data = JSON.parse(fs.readFileSync(0, 'utf-8'));
+function svgToThree(data) {
+  const parser = new DOM.window.DOMParser();
+  const svgDocument = parser.parseFromString(data, 'image/svg+xml');
+  const svgElement = svgDocument.documentElement;
+  const viewBox = svgElement.attributes.getNamedItem('viewBox').value;
+  const [minX, minY, width, height] = viewBox.split(' ').map((x) => +x);
+  const maxX = width + minX;
+  const maxY = height + minY;
+
+  const pathData = svgDocument.documentElement.querySelector('svg path').attributes.getNamedItem('d').value;
+
+  const input = pathData.split(' ');
+  let path = '';
+
+  for (
+    let i = 0;
+    i < input.length;
+  ) {
+    const action = input[i++];
+    if (action === '') break;
+    switch (action) {
+      case 'M': { // move
+        const x = input[i++];
+        const y = input[i++];
+
+        path += `m ${x} ${y} `;
+        break;
+      }
+      case 'L': { // lineTo
+        const x = input[i++];
+        const y = input[i++];
+
+        path += `l ${x} ${y} `;
+        break;
+      }
+      case 'Q': { // quadraticCurveTo
+        const controlPointX1 = input[i++];
+        const controlPointY1 = input[i++].slice(0, input[i - 1].length - 1);
+        const x = input[i++];
+        const y = input[i++];
+
+        // path.quadraticCurveTo(controlPointX1, controlPointY1, x, y);
+        path += `q ${x} ${y} ${controlPointX1} ${controlPointY1} `;
+        break;
+      }
+      case 'C': { // bezierCurveTo
+        const controlPointX1 = input[i++];
+        const controlPointY1 = input[i++].slice(0, input[i - 1].length - 1);
+        const controlPointX2 = input[i++];
+        const controlPointY2 = input[i++].slice(0, input[i - 1].length - 1);
+        const x = input[i++];
+        const y = input[i++];
+
+        // path.bezierCurveTo(controlPointX1, controlPointY1, controlPointX2, controlPointY2, x, y);
+        path += `b ${x} ${y} ${controlPointX1} ${controlPointY1} ${controlPointX2} ${controlPointY2} `;
+        break;
+      }
+      case 'Z': {
+        path += 'z';
+        break;
+      }
+      default: {
+        console.error(`Unknown action: ${action}`);
+        process.exit(1);
+      }
+    }
+  }
+
+  const glyph = {
+    ha: 0, // horizontal advance? doesn't seem to be used
+    x_min: minX,
+    x_max: maxX,
+    o: path,
+  };
+  console.log(`\n\n${JSON.stringify(glyph)}`);
+}
 
 if (process.argv[2] === '--svg') {
+  const data = JSON.parse(fs.readFileSync(0, 'utf-8'));
   threeToSVG(data);
-} else if (process.argv === '--three') {
-  //svgToThree();
+} else if (process.argv[2] === '--three') {
+  const data = fs.readFileSync(0, 'utf-8');
+  svgToThree(data);
 } else {
   console.error('Unknown option');
 }
