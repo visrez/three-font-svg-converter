@@ -1,0 +1,32 @@
+{
+  "name": "three-font-svg-converter",
+  "version": "0.1.0",
+  "description": "A tool to convert THREE.js fonts to and from SVG",
+  "main": "bin/three-font-svg-converter.js",
+  "bin": {
+    "three-font-svg-converter": "bin/three-font-svg-converter.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/visrez/three-font-svg-converter.git"
+  },
+  "keywords": [
+    "three",
+    "three.js",
+    "svg",
+    "convert",
+    "font"
+  ],
+  "author": "Hugo Sales <hugo@visrez.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/visrez/three-font-svg-converter/issues"
+  },
+  "homepage": "https://github.com/visrez/three-font-svg-converter#readme",
+  "devDependencies": {
+    "jsdom": "24.0.0"
+  }
+}
